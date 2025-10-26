@@ -30,3 +30,8 @@ class Database:
 
     def available_ingredients(self) -> List[Ingredient]:
         return self.ingredients
+
+    def find_ingredient_by_type(self, ingredient_type: str) -> List[Ingredient]:
+        """Возвращает список ингредиентов по типу (соус / начинка)."""
+        return [i for i in self.ingredients if i.get_type() == ingredient_type]
+

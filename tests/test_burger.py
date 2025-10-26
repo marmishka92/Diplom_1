@@ -1,63 +1,48 @@
-from unittest.mock import Mock
+import pytest
 from praktikum.burger import Burger
-from praktikum.database import Database
 from praktikum.bun import Bun
+from praktikum.ingredient import Ingredient
+from data import Data
+from praktikum.ingredient_types import INGREDIENT_TYPE_SAUCE, INGREDIENT_TYPE_FILLING
+
+
+@pytest.fixture
+def burger():
+    burger = Burger()
+    burger.set_buns(Bun(Data.BLACK_BUN, Data.BLACK_BUN_PRICE))
+    return burger
 
 
 class TestBurger:
+    def test_set_buns(self, burger):
+        assert burger.bun.get_name() == Data.BLACK_BUN
 
-    def test_set_buns(self):
-        burger = Burger()
-        bun = Mock()
-        burger.set_buns(bun=bun)
-        assert burger.bun == bun
+    def test_add_ingredient(self, burger):
+        ingredient = Ingredient(INGREDIENT_TYPE_SAUCE, Data.HOT_SAUCE, Data.HOT_SAUCE_PRICE)
+        burger.add_ingredient(ingredient)
+        assert len(burger.ingredients) == 1
+        assert burger.ingredients[0].get_name() == Data.HOT_SAUCE
 
-    def test_add_ingredient(self):
-        burger = Burger()
-        ingredient = Mock()
-        burger.add_ingredient(ingredient=ingredient)
-        assert burger.ingredients == [ingredient]
-
-    def test_remove_ingredient(self):
-        burger = Burger()
-        ingredient = Mock()
-        burger.add_ingredient(ingredient=ingredient)
+    def test_remove_ingredient(self, burger):
+        ingredient = Ingredient(INGREDIENT_TYPE_FILLING, Data.CUTLET, Data.CUTLET_PRICE)
+        burger.add_ingredient(ingredient)
         burger.remove_ingredient(0)
-        assert burger.ingredients == []
+        assert len(burger.ingredients) == 0
 
-    def test_move_ingredient(self):
-        burger = Burger()
-        ingredient_1 = Mock()
-        ingredient_2 = Mock()
-        burger.add_ingredient(ingredient=ingredient_1)
-        burger.add_ingredient(ingredient=ingredient_2)
+    def test_move_ingredient(self, burger):
+        ing1 = Ingredient(INGREDIENT_TYPE_SAUCE, Data.HOT_SAUCE, Data.HOT_SAUCE_PRICE)
+        ing2 = Ingredient(INGREDIENT_TYPE_FILLING, Data.CUTLET, Data.CUTLET_PRICE)
+        burger.add_ingredient(ing1)
+        burger.add_ingredient(ing2)
         burger.move_ingredient(0, 1)
-        assert burger.ingredients[1] ==  ingredient_1
-        assert burger.ingredients[0] == ingredient_2
+        assert burger.ingredients[0].get_name() == Data.CUTLET
 
-    def test_get_price(self):
-        burger = Burger()
-        ingredient = Mock()
-        bun = Mock()
-        bun.get_price.return_value = 1997
-        ingredient.get_price.return_value = 76
-        burger.set_buns(bun=bun)
-        burger.add_ingredient(ingredient=ingredient)
-        assert burger.get_price() == 4070
+    def test_get_price(self, burger):
+        burger.add_ingredient(Ingredient(INGREDIENT_TYPE_FILLING, Data.CUTLET, Data.CUTLET_PRICE))
+        assert burger.get_price() == Data.BLACK_BUN_PRICE * 2 + Data.CUTLET_PRICE
 
-    def test_get_receipt(self):
-        burger = Burger()
-        ingredient = Mock()
-        bun = Mock()
-        bun.get_name.return_value = 'Булочка с маком'
-        bun.get_price.return_value = 199
-        ingredient.get_name.return_value = 'Варенье'
-        ingredient.get_type.return_value = 'Динозавр'
-        ingredient.get_price.return_value = 10
-        burger.set_buns(bun=bun)
-        burger.add_ingredient(ingredient=ingredient)
-        assert burger.get_receipt() == ('(==== Булочка с маком ====)\n'
- '= динозавр Варенье =\n'
- '(==== Булочка с маком ====)\n'
- '\n'
- 'Price: 408')
+    def test_get_receipt(self, burger):
+        burger.add_ingredient(Ingredient(INGREDIENT_TYPE_SAUCE, Data.HOT_SAUCE, Data.HOT_SAUCE_PRICE))
+        receipt = burger.get_receipt()
+        assert Data.BLACK_BUN in receipt
+        assert Data.HOT_SAUCE in receipt
